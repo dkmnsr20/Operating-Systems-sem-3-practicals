@@ -1,0 +1,50 @@
+# Practical 5: Write a Program to Report Behavior of Linux Kernel (Kernel Version, CPU Type & Info)
+
+## Section 1: C Code
+# Save this as 'practical5.c'
+
+#include <stdio.h>
+#include <sys/utsname.h>
+#include <sys/sysinfo.h>
+
+int main() {
+    struct utsname uts;
+    if (uname(&uts) == -1) {
+        perror("uname");
+        return 1;
+    }
+
+    printf("=== Linux Kernel Behavior Report ===\n");
+    printf("Kernel Version: %s\n", uts.release);  // e.g., 5.15.0-...
+    printf("Kernel Name: %s\n", uts.sysname);
+    printf("Machine (CPU Type): %s\n", uts.machine);  // e.g., x86_64
+
+    struct sysinfo info;
+    sysinfo(&info);
+    printf("Total CPU Time (jiffies): %ld\n", info.uptime);
+    printf("Load Average (1 min): %.2f\n", (double)info.loads[0] / (1 << SI_LOAD_SHIFT));
+
+    return 0;
+}
+
+## Section 2: Linux Terminal Commands
+# Run these in Ubuntu/Linux terminal to compile and execute
+
+gcc -o practical5 practical5.c
+./practical5
+
+## Section 3: Expected Output/Input
+# No user input required (non-interactive program).
+# Expected Output (sample; actual values depend on your system, e.g., Ubuntu 24.04):
+
+=== Linux Kernel Behavior Report ===
+Kernel Version: 6.8.0-47-generic
+Kernel Name: Linux
+Machine (CPU Type): x86_64
+Total CPU Time (jiffies): 1234567
+Load Average (1 min): 0.12
+
+# Notes:
+# - 'jiffies' is system uptime in seconds (kernel ticks).
+# - Load Average shows CPU load (0.00 = idle; >1.00 = busy).
+# If errors occur (e.g., on non-Linux), check headers with 'man uname' or 'man sysinfo'.

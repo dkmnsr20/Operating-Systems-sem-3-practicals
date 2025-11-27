@@ -1,0 +1,77 @@
+# Practical 11: Write a Program to Calculate Sum of n Numbers Using Pthreads
+
+## Section 1: C Code
+# Save this as 'practical11.c'
+# Parallel sum with threads; compile with -pthread.
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+
+struct ThreadData {
+    int start, end;
+    long *arr;
+    long partial_sum;
+};
+
+void *sum_chunk(void *arg) {
+    struct ThreadData *data = (struct ThreadData *)arg;
+    data->partial_sum = 0;
+    for (int i = data->start; i < data->end; i++) {
+        data->partial_sum += data->arr[i];
+    }
+    return NULL;
+}
+
+int main() {
+    int n, num_threads;
+    printf("Enter n (array size): ");
+    scanf("%d", &n);
+    printf("Enter number of threads: ");
+    scanf("%d", &num_threads);
+
+    long *arr = malloc(n * sizeof(long));
+    printf("Enter %d numbers: ", n);
+    for (int i = 0; i < n; i++) scanf("%ld", &arr[i]);
+
+    pthread_t threads[num_threads];
+    struct ThreadData data[num_threads];
+    int chunk = n / num_threads;
+
+    for (int i = 0; i < num_threads; i++) {
+        data[i].arr = arr;
+        data[i].start = i * chunk;
+        data[i].end = (i == num_threads - 1) ? n : (i + 1) * chunk;
+        pthread_create(&threads[i], NULL, sum_chunk, &data[i]);
+    }
+
+    long total_sum = 0;
+    for (int i = 0; i < num_threads; i++) {
+        pthread_join(threads[i], NULL);
+        total_sum += data[i].partial_sum;
+    }
+
+    printf("Sum of numbers: %ld\n", total_sum);
+    free(arr);
+    return 0;
+}
+
+## Section 2: Linux Terminal Commands
+# Run these in Ubuntu/Linux terminal
+
+gcc -o practical11 practical11.c -pthread
+./practical11  # Enter: n=6, threads=2, numbers 1 2 3 4 5 6
+
+## Section 3: Expected Output/Input
+# Input:
+Enter n (array size): 6
+Enter number of threads: 2
+Enter 6 numbers: 1 2 3 4 5 6
+
+# Expected Output:
+Sum of numbers: 21
+
+# Notes:
+# - Threads divide array; sum partials.
+# - For large n, shows speedup; man pthread_create.
+# - Error if n % threads != 0 (last chunk larger).

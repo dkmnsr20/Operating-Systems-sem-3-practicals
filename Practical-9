@@ -1,0 +1,93 @@
+# Practical 9: Write a Program to Implement Shortest Job First (SJF) Scheduling Algorithm
+
+## Section 1: C Code
+# Save this as 'practical9.c'
+# Non-preemptive SJF: Pick shortest burst in ready queue.
+
+#include <stdio.h>
+
+struct Process {
+    int id, arrival, burst;
+};
+
+int main() {
+    int n;
+    printf("Enter number of processes: ");
+    scanf("%d", &n);
+
+    struct Process p[n];
+    for (int i = 0; i < n; i++) {
+        p[i].id = i + 1;
+        printf("Enter arrival time for P%d: ", i + 1);
+        scanf("%d", &p[i].arrival);
+        printf("Enter burst time for P%d: ", i + 1);
+        scanf("%d", &p[i].burst);
+    }
+
+    // Sort by arrival
+    for (int i = 0; i < n - 1; i++) {
+        for (int j = 0; j < n - i - 1; j++) {
+            if (p[j].arrival > p[j + 1].arrival) {
+                struct Process temp = p[j];
+                p[j] = p[j + 1];
+                p[j + 1] = temp;
+            }
+        }
+    }
+
+    printf("\nProcess\tArrival\tBurst\tCompletion\tTurnaround\tWaiting\n");
+    int current_time = 0;
+    float total_tat = 0, total_wt = 0;
+    for (int i = 0; i < n; i++) {
+        // Find shortest burst from i to end (ready queue)
+        int shortest = i;
+        for (int j = i + 1; j < n; j++) {
+            if (p[j].arrival <= current_time && p[j].burst < p[shortest].burst) {
+                shortest = j;
+            }
+        }
+        // Swap to front
+        struct Process temp = p[i];
+        p[i] = p[shortest];
+        p[shortest] = temp;
+
+        if (current_time < p[i].arrival) current_time = p[i].arrival;
+        int completion = current_time + p[i].burst;
+        int tat = completion - p[i].arrival;
+        int wt = tat - p[i].burst;
+        total_tat += tat;
+        total_wt += wt;
+
+        printf("P%d\t%d\t%d\t%d\t\t%d\t\t%d\n", p[i].id, p[i].arrival, p[i].burst, completion, tat, wt);
+        current_time = completion;
+    }
+
+    printf("\nAvg Turnaround Time: %.2f\nAvg Waiting Time: %.2f\n", total_tat / n, total_wt / n);
+    return 0;
+}
+
+## Section 2: Linux Terminal Commands
+# Run these in Ubuntu/Linux terminal
+
+gcc -o practical9 practical9.c
+./practical9  # Same input as Practical 8
+
+## Section 3: Expected Output/Input
+# Input (prompts):
+Enter number of processes: 3
+Enter arrival time for P1: 0
+Enter burst time for P1: 5
+... (for P2: 1,3; P3:2,8)
+
+# Expected Output:
+Process Arrival Burst Completion Turnaround Waiting
+P1      0      3     3          3          0
+P2      1      5     8          7          2
+P3      2      8     16         14         6
+
+Avg Turnaround Time: 8.00
+Avg Waiting Time: 2.67
+
+# Notes:
+# - SJF: Minimizes avg WT by shortest burst first.
+# - Compare avgs with FCFS (lower WT here).

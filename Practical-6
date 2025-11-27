@@ -1,0 +1,60 @@
+# Practical 6: Write a Program to Report Behavior of Linux Kernel (Memory Info)
+
+## Section 1: C Code
+# Save this as 'practical6.c'
+# Reads /proc/meminfo for total/free/used/available memory.
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+int main() {
+    FILE *meminfo = fopen("/proc/meminfo", "r");
+    if (!meminfo) {
+        perror("fopen");
+        return 1;
+    }
+
+    char line[256];
+    long total = 0, free = 0, available = 0;
+
+    while (fgets(line, sizeof(line), meminfo)) {
+        if (strncmp(line, "MemTotal:", 9) == 0) {
+            sscanf(line, "MemTotal: %ld kB", &total);
+        } else if (strncmp(line, "MemFree:", 8) == 0) {
+            sscanf(line, "MemFree: %ld kB", &free);
+        } else if (strncmp(line, "MemAvailable:", 13) == 0) {
+            sscanf(line, "MemAvailable: %ld kB", &available);
+        }
+    }
+    fclose(meminfo);
+
+    printf("=== Linux Kernel Memory Report ===\n");
+    printf("Configured Memory (Total): %ld kB (%.2f GB)\n", total, total / 1024.0 / 1024.0);
+    printf("Free Memory: %ld kB (%.2f GB)\n", free, free / 1024.0 / 1024.0);
+    printf("Used Memory: %ld kB (%.2f GB)\n", total - free, (total - free) / 1024.0 / 1024.0);
+    printf("Available Memory: %ld kB (%.2f GB)\n", available, available / 1024.0 / 1024.0);
+
+    return 0;
+}
+
+## Section 2: Linux Terminal Commands
+# Run these in Ubuntu/Linux terminal to compile and execute
+
+gcc -o practical6 practical6.c
+./practical6
+
+## Section 3: Expected Output/Input
+# No user input required.
+# Expected Output (sample; varies by system RAM):
+
+=== Linux Kernel Memory Report ===
+Configured Memory (Total): 16384000 kB (15.62 GB)
+Free Memory: 2048000 kB (1.95 GB)
+Used Memory: 14336000 kB (13.67 GB)
+Available Memory: 10240000 kB (9.77 GB)
+
+# Notes:
+# - Units in kB from /proc/meminfo.
+# - Used = Total - Free (approx; doesn't include buffers).
+# - Run 'free -h' for manual verification.

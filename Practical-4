@@ -1,0 +1,98 @@
+# Practical 4: Write a Program Using fork() and/or exec() Where Parent and Child Execute:
+# i. Same program, same code.
+# ii. Same program, different code.
+# iii. Before terminating, the parent waits for the child to finish its task.
+
+## Section 1: C Code
+# Save this as 'practical4.c'
+# Demonstrates fork() for process creation, wait() for synchronization.
+# No exec() used, as "same program" is achieved via code branches.
+
+#include <stdio.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <stdlib.h>
+
+int main() {
+    pid_t pid;
+
+    // Part i: Same program, same code
+    printf("=== Part i: Same program, same code ===\n");
+    pid = fork();
+
+    if (pid < 0) {
+        fprintf(stderr, "Fork failed!\n");
+        exit(1);
+    } else if (pid == 0) {
+        // Child process
+        printf("Hello from child process (PID: %d)\n", getpid());
+        exit(0);  // Child exits after its task
+    } else {
+        // Parent process
+        printf("Hello from parent process (PID: %d, Child PID: %d)\n", getpid(), pid);
+        wait(NULL);
+        printf("Parent: Child has finished.\n");
+    }
+
+    sleep(1);  // Only parent sleeps
+
+    // Part ii: Same program, different code
+    printf("\n=== Part ii: Same program, different code ===\n");
+    pid = fork();
+
+    if (pid < 0) {
+        fprintf(stderr, "Fork failed!\n");
+        exit(1);
+    } else if (pid == 0) {
+        // Child process: different code
+        printf("Child: Executing different task - sleeping for 2 seconds (PID: %d)\n", getpid());
+        sleep(2);
+        printf("Child: Task completed.\n");
+        exit(0);  // Child exits
+    } else {
+        // Parent process: different code
+        printf("Parent: Executing different task - counting to 3 (Child PID: %d)\n", pid);
+        for (int i = 1; i <= 3; i++) {
+            printf("Parent: Count %d\n", i);
+            sleep(1);
+        }
+        wait(NULL);
+        printf("Parent: Child has finished its task.\n");
+    }
+
+    printf("Program execution completed.\n");
+    return 0;
+}
+
+## Section 2: Linux Terminal Commands
+# Run these in Ubuntu/Linux terminal to compile and execute
+
+gcc -o practical4 practical4.c
+./practical4
+
+## Section 3: Expected Output/Input
+# No user input required (non-interactive program).
+# Expected Output (sample; actual PIDs vary by run; order may interleave slightly due to scheduling):
+
+=== Part i: Same program, same code ===
+Hello from parent process (PID: 1234, Child PID: 1235)
+Hello from child process (PID: 1235)
+Parent: Child has finished.
+
+=== Part ii: Same program, different code ===
+Parent: Executing different task - counting to 3 (Child PID: 1236)
+Child: Executing different task - sleeping for 2 seconds (PID: 1236)
+Parent: Count 1
+Parent: Count 2
+Child: Task completed.
+Parent: Count 3
+Parent: Child has finished its task.
+Program execution completed.
+
+# Notes:
+# - Part i: Both print "Hello" (same code post-fork).
+# - Part ii: Child sleeps, parent counts (different code paths).
+# - wait(NULL): Parent synchronizes (waits for child to exit).
+# - Run multiple times for varying PID/output order.
+# - If fork fails (rare), check system limits with 'ulimit -u'.
